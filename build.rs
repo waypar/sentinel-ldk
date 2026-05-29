@@ -1,4 +1,7 @@
+mod build_hasp_error;
+use build_hasp_error::{extract_hasp_error_details, generate_hasp_error_messages_rs};
 use std::env;
+use std::fs;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -66,6 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .join("hasp_api.h"),
         _ => ldk_api_dir.join("Licensing").join("C").join("hasp_api.h"),
     };
+
     // Generate the bindings for the Licensing API
     let bindings = bindgen::Builder::default()
         .clang_arg(format!("-I{}", ldk_api_dir.display()))
@@ -79,9 +83,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let bindings_path = out_path.join("bindings.rs");
     bindings
-        .write_to_file(out_path.join("bindings.rs"))
+        .write_to_file(&bindings_path)
         .expect("Couldn't write bindings!");
+
+    // Generate hasp error companion functions
+    let bindings_src = fs::read_to_string(&bindings_path)?;
+    let details = extract_hasp_error_details(&bindings_src)?;
+    generate_hasp_error_messages_rs(&details, &out_path.join("hasp_error_messages.rs"))?;
 
     let hasp_lib_name = match target_os.as_str() {
         "macos" => format!("hasp_darwin_{}", &vendor_id),
@@ -89,13 +99,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => panic!("Unsupported target"),
     };
 
-    println!("cargo::rustc-link-lib=static={}", &hasp_lib_name);
-
     let lib_path = PathBuf::from(&ldk_api_dir)
         .join("Licensing/C")
         .join(sentinel_arch);
     println!("cargo::rustc-link-search={}", lib_path.display());
-    println!("cargo:rustc-link-lib=static={}", &hasp_lib_name);
+    println!("cargo::rustc-link-lib=static={}", &hasp_lib_name);
+
+    if target_os == "macos" {
+        println!("cargo::rustc-link-lib=framework=CoreFoundation");
+        println!("cargo::rustc-link-lib=framework=SystemConfiguration");
+    }
 
     Ok(())
 }

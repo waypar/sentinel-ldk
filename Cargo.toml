@@ -6,3 +6,8 @@ license = "MIT"
 
 [build-dependencies]
 bindgen = "0.72.1"
+syn = { version = "2", features = ["full"] }
+
+[dev-dependencies]
+# Required to test build_hasp_errors.rs
+syn = { version = "2", features = ["full"] }
