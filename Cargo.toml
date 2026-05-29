@@ -11,3 +11,6 @@ syn = { version = "2", features = ["full"] }
 [dev-dependencies]
 # Required to test build_hasp_errors.rs
 syn = { version = "2", features = ["full"] }
+
+[dependencies]
+xml = "1.3.0"

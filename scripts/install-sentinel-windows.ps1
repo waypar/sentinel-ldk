@@ -53,6 +53,7 @@ else {
 
 $msiPaths = @(
   "Windows\subsetup\Sentinel Vendor Suite.msi"
+  "Windows\subsetup\Sentinel Runtime.msi"
 )
 foreach ($msiPath in $msiPaths) {
   Write-Host "Installing $($msiPath)"
@@ -72,6 +73,18 @@ foreach ($msiPath in $msiPaths) {
     throw "Installer failed with exit code $($process.ExitCode)"
   }
 }
+
+Write-Host "Installing license file"
+# Wait for LDK to run
+sleep 10
+
+$licensePath = Join-Path $repoRoot "licenses\Unlocked_20260529_182601.v2c"
+
+Start-Process `
+  -FilePath "curl.exe" `
+  -ArgumentList "-F `"check_in_file=@$licensePath`" `"http://localhost:1947/_int_/checkin_file.html`"" `
+  -Wait `
+  -PassThru
 
 $sdkDir = Join-Path ${env:ProgramFiles(x86)} "Thales\Sentinel LDK"
 $dllDir = Join-Path $sdkDir "API\Licensing\C\x64"

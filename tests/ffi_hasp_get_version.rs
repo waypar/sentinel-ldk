@@ -32,7 +32,7 @@ fn ffi_hasp_get_version() {
         println!("HASP Status: {:?}", status);
         if status == hasp_api_ffi::hasp_error_codes::HASP_STATUS_OK {
             println!(
-                "HASP Version: {:?}.{:?}.{:?}.{:?}",
+                "HASP Version: {}.{}.{}.{}",
                 major_version, minor_version, generation_version, build_number
             );
         }
