@@ -1,0 +1,24 @@
+{
+  "name": "Sentinel LDK",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "overrideCommand": false,
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [
+    1947
+  ],
+  "mounts": [
+    "source=.,target=/workspace,type=bind",
+    {
+      "source": "devcontainer-cargo-cache-${devcontainerId}",
+      "target": "/usr/local/cargo",
+      "type": "volume"
+    }
+  ],
+  "remoteEnv": {
+    "SENTINEL_LDK_SDK_DIR": "/workspace/vendor/linux/Sentinel-LDK"
+  },
+  "remoteUser": "root"
+}
