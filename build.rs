@@ -110,13 +110,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if target_os == "macos" {
         println!("cargo:rustc-link-lib=framework=CoreFoundation");
         println!("cargo:rustc-link-lib=framework=SystemConfiguration");
-
-        // if target_os == "macos" {
-        //     println!("cargo:rustc-link-lib=framework=CoreFoundation");
-        //     println!("cargo:rustc-link-lib=framework=Security");
-        //     println!("cargo:rustc-link-lib=framework=SystemConfiguration");
-        //     println!("cargo:rustc-link-lib=framework=IOKit");
-        // }
     }
 
     Ok(())

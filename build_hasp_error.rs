@@ -3,9 +3,12 @@ use std::fs;
 use std::path::Path;
 use syn::{Attribute, Expr, ExprLit, File, Item, Lit, Meta};
 
+/// Status code value, symbolic name, and optional human-readable message.
+type HaspErrorDetail = (u32, String, Option<String>);
+
 pub fn extract_hasp_error_details(
     bindings_src: &str,
-) -> Result<Vec<(u32, String, String)>, Box<dyn std::error::Error>> {
+) -> Result<Vec<HaspErrorDetail>, Box<dyn std::error::Error>> {
     let ast: File = syn::parse_file(bindings_src)?;
     let enum_item = ast
         .items
@@ -16,7 +19,7 @@ pub fn extract_hasp_error_details(
         })
         .ok_or("hasp_error_codes enum not found in bindings.rs")?;
 
-    let mut by_value = BTreeMap::<u32, (String, String)>::new();
+    let mut by_value = BTreeMap::<u32, (String, Option<String>)>::new();
 
     for variant in &enum_item.variants {
         let doc = extract_doc_message(&variant.attrs);
@@ -31,11 +34,12 @@ pub fn extract_hasp_error_details(
             _ => continue,
         };
 
-        if let Some(doc) = doc {
-            by_value
-                .entry(value)
-                .or_insert((variant.ident.to_string(), doc));
-        }
+        // The symbolic name always comes from the enum variant itself, so it's
+        // recorded even when the header didn't have a doc comment for it. Only
+        // the human-readable message is allowed to fall back to a generic default.
+        by_value
+            .entry(value)
+            .or_insert((variant.ident.to_string(), doc));
     }
 
     Ok(by_value
@@ -91,7 +95,7 @@ fn escape_rust_string(s: &str) -> String {
 }
 
 pub fn generate_hasp_error_messages_rs(
-    details: &[(u32, String, String)],
+    details: &[HaspErrorDetail],
     out_path: &Path,
 ) -> std::io::Result<()> {
     let mut out =
@@ -111,10 +115,12 @@ pub fn generate_hasp_error_messages_rs(
     out.push_str("pub(crate) fn hasp_status_message(code: u32) -> &'static str {\n");
     out.push_str("    match code {\n");
     for (value, _, message) in details {
-        out.push_str(&format!(
-            "        {value} => \"{}\",\n",
-            escape_rust_string(message)
-        ));
+        if let Some(message) = message {
+            out.push_str(&format!(
+                "        {value} => \"{}\",\n",
+                escape_rust_string(message)
+            ));
+        }
     }
     out.push_str("        _ => \"Unknown HASP status code\",\n");
     out.push_str("    }\n");
