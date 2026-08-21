@@ -78,3 +78,26 @@ pub fn hasp_hasptime_to_datetime(time: u64) -> Result<HaspDatetime, HaspError> {
         }
     }
 }
+
+#[test]
+fn test_hasptime_conversions() {
+    let time = 1609459200; // 2021-01-01 00:00:00 UTC
+    let datetime = hasp_hasptime_to_datetime(time).unwrap();
+    assert_eq!(datetime.year, 2021);
+    assert_eq!(datetime.month, 1);
+    assert_eq!(datetime.day, 1);
+    assert_eq!(datetime.hour, 0);
+    assert_eq!(datetime.minute, 0);
+    assert_eq!(datetime.second, 0);
+
+    let converted_time = hasp_datetime_to_hasptime(
+        datetime.day,
+        datetime.month,
+        datetime.year,
+        datetime.hour,
+        datetime.minute,
+        datetime.second,
+    )
+    .unwrap();
+    assert_eq!(converted_time, time);
+}

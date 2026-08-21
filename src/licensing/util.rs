@@ -5,7 +5,7 @@ use crate::{
     licensing::{HaspError, HaspStatus},
 };
 
-/// Converts a hasp function output string to a Result<Option<String>, HaspError>.
+/// Converts a hasp function output string to a Result<Option<String>, HaspError> and frees the info string.
 pub fn hasp_out_string_to_result(
     result: HaspStatus,
     info: *mut std::os::raw::c_char,

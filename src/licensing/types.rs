@@ -36,6 +36,8 @@ impl fmt::Display for HaspVersion {
     }
 }
 
+/// <https://docs.sentinel.thalesgroup.com/ldk/LDKdocs/API-licensing/Licensing_XML_Tags/Using_XML_Tags_to_Define_Scope.htm>
+/// <https://docs.sentinel.thalesgroup.com/ldk/LDKdocs/API-licensing/Licensing_XML_Tags/Scope__XML_Tags.htm>
 #[derive(Debug)]
 pub enum HaspScope {
     Custom(String),

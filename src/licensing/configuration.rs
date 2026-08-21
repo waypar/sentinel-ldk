@@ -40,6 +40,7 @@ pub fn hasp_get_info(
 /// Write an update to a local or remote Sentinel protection key.
 ///
 /// <https://docs.sentinel.thalesgroup.com/ldk/LDKdocs/API-licensing/Licensing_API/hasp_update.htm>
+/// <https://docs.sentinel.thalesgroup.com/ldk/LDKdocs/API-licensing/Licensing_XML_Tags/Updating_sessions.htm>
 ///
 /// See also: [`crate::hasp_api_ffi::hasp_update`]
 ///

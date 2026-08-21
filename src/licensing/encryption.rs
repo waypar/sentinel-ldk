@@ -27,10 +27,9 @@ pub fn hasp_encrypt(handle: HaspHandle, buffer: &mut [u8]) -> Result<(), HaspEnc
             .map_err(|err| HaspEncryptError::OversizedBuffer(err))?;
         let status =
             hasp_api_ffi::hasp_encrypt(handle, buffer.as_mut_ptr() as *mut c_void, buffer_length);
-        if status == HaspStatus::HASP_STATUS_OK {
-            Ok(())
-        } else {
-            Err(HaspEncryptError::HaspError(HaspError::from(status)))
+        match status {
+            HaspStatus::HASP_STATUS_OK => Ok(()),
+            _ => Err(HaspEncryptError::HaspError(HaspError::from(status))),
         }
     }
 }
@@ -41,6 +40,17 @@ pub fn hasp_encrypt(handle: HaspHandle, buffer: &mut [u8]) -> Result<(), HaspEnc
 ///
 /// See also: [`crate::hasp_api_ffi::hasp_decrypt`]
 ///
-pub fn hasp_decrypt() -> Result<(), HaspError> {
-    Err(HaspStatus::HASP_NOT_IMPL.into())
+pub fn hasp_decrypt(handle: HaspHandle, buffer: &mut [u8]) -> Result<(), HaspEncryptError> {
+    unsafe {
+        let buffer_length: u32 = buffer
+            .len()
+            .try_into()
+            .map_err(|err| HaspEncryptError::OversizedBuffer(err))?;
+        let status =
+            hasp_api_ffi::hasp_decrypt(handle, buffer.as_mut_ptr() as *mut c_void, buffer_length);
+        match status {
+            HaspStatus::HASP_STATUS_OK => Ok(()),
+            _ => Err(HaspEncryptError::HaspError(HaspError::from(status))),
+        }
+    }
 }

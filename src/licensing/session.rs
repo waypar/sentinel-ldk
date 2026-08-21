@@ -1,6 +1,8 @@
 use crate::hasp_api_ffi;
-use crate::licensing::{HaspError, HaspHandle, HaspStatus};
+use crate::licensing::util::hasp_out_string_to_result;
+use crate::licensing::{HaspError, HaspFormat, HaspHandle, HaspStatus};
 use std::ffi::CString;
+use std::ptr::null_mut;
 
 // Session
 
@@ -62,26 +64,71 @@ pub fn hasp_login_scope(
 ///
 /// See also: [`crate::hasp_api_ffi::hasp_logout`]
 ///
-pub fn hasp_logout() -> Result<(), HaspError> {
-    Err(HaspStatus::HASP_NOT_IMPL.into())
+pub fn hasp_logout(handle: HaspHandle) -> Result<(), HaspError> {
+    unsafe {
+        let status = hasp_api_ffi::hasp_logout(handle);
+        match status {
+            HaspStatus::HASP_STATUS_OK => Ok(()),
+            _ => Err(status.into()),
+        }
+    }
 }
 
 /// Retrieves information about a session.
 ///
-/// <https://docs.sentinel.thalesgroup.com/ldk/LDKdocs/API-licensing/Licensing_API/hasp_get_session_info.htm>
+/// <https://docs.sentinel.thalesgroup.com/ldk/LDKdocs/API-licensing/Licensing_API/hasp_get_sessioninfo.htm>
 ///
 /// See also: [`crate::hasp_api_ffi::hasp_get_session_info`]
 ///
-pub fn hasp_get_session_info() -> Result<(), HaspError> {
-    Err(HaspStatus::HASP_NOT_IMPL.into())
+pub fn hasp_get_sessioninfo(
+    handle: HaspHandle,
+    format: &HaspFormat,
+) -> Result<Option<String>, HaspError> {
+    unsafe {
+        let mut info: *mut std::os::raw::c_char = null_mut();
+        let status =
+            hasp_api_ffi::hasp_get_sessioninfo(handle, format.as_cstr().as_ptr(), &mut info);
+        hasp_out_string_to_result(status, info)
+    }
 }
 
+pub enum HaspUpdateSessionOption {
+    Options { execution_count_to_consume: u32 },
+    Custom(String),
+}
+
+impl HaspUpdateSessionOption {
+    fn to_xml(self) -> String {
+        match self {
+            HaspUpdateSessionOption::Options {
+                execution_count_to_consume,
+            } => format!(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
+                <haspoption>
+                    <execution_count_to_consume>{}</execution_count_to_consume>
+                </haspoption>",
+                execution_count_to_consume
+            ),
+            HaspUpdateSessionOption::Custom(str) => str,
+        }
+    }
+}
 /// Update information regarding a login session for a Sentinel protection key.
 ///
 /// <https://docs.sentinel.thalesgroup.com/ldk/LDKdocs/API-licensing/Licensing_API/hasp_update_session.htm>
 ///
 /// See also: [`crate::hasp_api_ffi::hasp_update_session`]
 ///
-pub fn hasp_update_session() -> Result<(), HaspError> {
-    Err(HaspStatus::HASP_NOT_IMPL.into())
+pub fn hasp_update_session(
+    handle: HaspHandle,
+    options: HaspUpdateSessionOption,
+) -> Result<(), HaspError> {
+    unsafe {
+        let config_xml = CString::new(options.to_xml()).map_err(|_| HaspStatus::HASP_INV_FORMAT)?;
+        let status = hasp_api_ffi::hasp_update_session(handle, config_xml.as_ptr());
+        match status {
+            HaspStatus::HASP_STATUS_OK => Ok(()),
+            _ => Err(status.into()),
+        }
+    }
 }
